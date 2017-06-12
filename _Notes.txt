@@ -1,0 +1,156 @@
+﻿#Components
+
+- XmlDocument
+- HtmlAgility
+- Newtonsoft.Json
+
+
+#Urls
+
+- http://www.jsoneditoronline.org/
+- http://data.nba.com/json/cms/noseason/scoreboard/20161105/games.json
+- http://data.nba.com/10s/json/cms/noseason/game/20161105/0021600086/pbp_all.json
+
+
+
+
+____________________________________________________________
+
+XML
+____________________________________________________________
+
+
+        private void Form1_Load(object sender, EventArgs e) {
+            // http://udn.com/rssfeed/news/1
+            // http://gd2.mlb.com/components/game/mlb/year_2015/
+        }
+
+        private void button1_Click(object sender, EventArgs e) {
+            System.Net.WebClient objWebClient = new System.Net.WebClient();
+            objWebClient.DownloadFile("http://udn.com/rssfeed/news/1",
+                @"c:\temp\udn.xml");
+            button1.Text = "OK";
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(@"c:\temp\udn.xml");
+
+            XmlNode node = doc.SelectSingleNode("/rss/channel/title");
+            if (node == null) {
+                button2.Text = "not found";
+                return;
+            }
+            listBox1.Items.Add(node.InnerText);
+
+            XmlNodeList nodeList = doc.SelectNodes("/rss/channel/item");
+            foreach (XmlNode objNode in nodeList) {
+                string s = objNode.SelectSingleNode("./title").InnerText;
+                listBox1.Items.Add(s);
+            }
+
+            button2.Text = nodeList.Count.ToString();
+        }
+
+        private void button3_Click(object sender, EventArgs e) {
+            System.Net.WebClient objWebClient = new System.Net.WebClient();
+            objWebClient.DownloadFile("http://gd2.mlb.com/components/game/mlb/year_2015/",
+                @"c:\temp\mlb.txt");
+            button3.Text = "OK";
+        }
+
+        private void button4_Click(object sender, EventArgs e) {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(@"c:\temp\udn.xml");
+            XmlNode node = doc.SelectSingleNode("/rss");
+            button4.Text = node.Attributes["version"].Value;
+        }
+
+
+
+
+____________________________________________________________
+
+JSON  (serialize and deserialize object)
+____________________________________________________________
+
+
+    public partial class Form1 : Form {
+        public Form1() {
+            InitializeComponent();
+        }
+        private void button1_Click(object sender, EventArgs e) {
+            TLocation obj = new TLocation() { X = 100, Y = 200, Name = "TC " };
+            string s = JsonConvert.SerializeObject(obj);
+
+            textBox1.Text += s 
+                 + System.Environment.NewLine + System.Environment.NewLine;
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            string s = "{\"X\":100,\"Y\":200,\"Name\":\"TC \"}";
+            TLocation obj = JsonConvert.DeserializeObject<TLocation>(s);
+            button2.Text = obj.Name;
+        }
+    }
+    public class TLocation {
+        //private int test = 101;
+        public int X { set; get; }
+        public int Y { set; get; }
+        public string Name { set; get; }
+    }
+
+
+
+____________________________________________________________
+
+JSON  (parse JSON data)
+____________________________________________________________
+
+
+        private void button1_Click(object sender, EventArgs e) {
+            System.Net.WebClient objWebClient = new System.Net.WebClient();
+            objWebClient.DownloadFile(
+                "http://data.nba.com/json/cms/noseason/scoreboard/20161105/games.json",
+                @"c:\temp\nba.txt"
+            );
+            button1.Text = "OK";
+        }
+
+        private void button2_Click(object sender, EventArgs e) {
+            System.IO.StreamReader r = 
+                new System.IO.StreamReader(@"c:\temp\nba.txt");
+            string jsonString = r.ReadToEnd();
+            r.Close();
+
+            // using Newtonsoft.Json.Linq;
+            JObject obj = JObject.Parse(jsonString);
+            JToken objToken = obj.SelectToken(
+                "sports_content.sports_meta.season_meta.calendar_date");
+
+            textBox1.Text += objToken.ToString()
+                + System.Environment.NewLine + System.Environment.NewLine;
+
+            objToken = obj.SelectToken(
+                "sports_content.sports_meta.season_meta");
+
+            string s = objToken.Value<string>("calendar_date");
+            textBox1.Text += s
+                + System.Environment.NewLine + System.Environment.NewLine;
+
+            var gameList = obj.SelectToken("sports_content.games.game");
+            foreach (var game in gameList) {
+                string sMatchup = string.Format("{0}@{1}",
+                      game.SelectToken("visitor").Value<string>("team_key")
+                    , game.SelectToken("home").Value<string>("team_key")
+                    );
+                textBox1.Text += sMatchup
+                + System.Environment.NewLine + System.Environment.NewLine;
+            }
+
+            button2.Text = "OK";
+        }
+
+
+
+
