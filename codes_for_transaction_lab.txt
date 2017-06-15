@@ -1,0 +1,75 @@
+-- Admin
+exec sp_who
+exec sp_lock
+
+select db_id('northwind')
+select db_name(5)
+
+
+
+
+
+-- 51 A
+use northwind
+go
+
+set transaction isolation level read uncommitted
+begin transaction
+select * from Products where ProductID = 1
+commit tran
+
+-- 51 A
+set transaction isolation level read committed
+begin transaction
+select * from Products with (xlock) where ProductID = 1
+update Products set UnitsInStock = 99 where ProductID = 1
+commit tran
+
+select * from Products
+
+
+
+-- 53 B
+use northwind
+go
+
+set transaction isolation level read uncommitted
+begin transaction
+select * from Products where ProductID = 1
+commit tran
+
+-- 53 B
+set transaction isolation level read committed
+begin transaction
+select * from Products with (xlock) where ProductID = 1
+update Products set UnitsInStock = 98 where ProductID = 1
+commit tran
+
+select * from Products
+
+
+
+
+
+-- 55 C
+use northwind
+go
+
+set transaction isolation level read uncommitted
+begin transaction
+select * from Products where ProductID = 1
+commit tran
+
+set transaction isolation level read committed
+begin transaction
+select * from Products with (xlock) where ProductID = 1
+update Products set UnitsInStock = 99 where ProductID = 1
+commit tran
+
+select * from Products
+
+
+
+
+
+
